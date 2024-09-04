@@ -8,7 +8,6 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-# serial_port = serial.Serial(os.getenv("SERIAL_PATH"), 115200, timeout=1)
 CHUNK = 1024
 FORMAT = pyaudio.paInt16
 CHANNELS = 2
@@ -33,39 +32,6 @@ class SeirialPort:
 
     def send_reset(self):
         self.serial_port.write(b"3")
-
-
-# class OutputStream:
-#     def __init__(self, sound: list[bytes], end_callback):
-#         self.sound = sound
-#         self.end_callback = end_callback
-#         self.pa = pyaudio.PyAudio()
-#         self.index = 0
-#         self.is_playing = False
-#         self.stream = self.pa.open(
-#             format=FORMAT,
-#             channels=2,
-#             rate=RATE,
-#             output=True,
-#             frames_per_buffer=CHUNK,
-#             stream_callback=self.callback,
-#         )
-
-#     def callback(self, in_data, frame_count, time_info, status):
-#         data = self.callback_output(in_data, frame_count, time_info, status)
-#         if data is None and self.is_playing:
-#             self.end_callback()
-#             self.is_playing = False
-
-#         return (data, pyaudio.paContinue)
-
-
-#     def play(self):
-#         if self.is_playing:
-#             return
-
-#         self.index = 0
-#         self.is_playing = True
 
 
 class MicStream:
@@ -106,9 +72,6 @@ class MicStream:
             print("Detected")
             self.play()
             self.serial_port.send_on_clean()
-            # subprocess.run(["aplay", "toire_raspi_py/sound.wav"])
-            # serial_port.write(b"2")
-            # self.is_playing = False
 
     def callback_output(self, in_data, frame_count, time_info, status):
         if not self.is_playing:
@@ -144,29 +107,6 @@ class MicStream:
         self.exist_unko = False
 
 
-# class Stream:
-#     def __init__(self, sound: list[bytes]):
-#         self.sound = sound
-#         self.index = 0
-#         self.pa = pyaudio.PyAudio()
-#         self.stream = self.pa.open(
-#             format=FORMAT,
-#             channels=2,
-#             rate=RATE,
-#             output=True,
-#             input=True,
-#             frames_per_buffer=CHUNK,
-#             stream_callback=self.callback,
-#         )
-
-#     def callback(self, in_data, frame_count, time_info, status):
-#         self.callback_input(in_data, frame_count, time_info, status)
-#         return (b"0" * 4096, pyaudio.paContinue)
-
-#     def callback_input(self, in_data, frame_count, time_info, status):
-#         print(np.frombuffer(in_data, dtype="int16") / 32768.0)
-
-
 def main():
     sound = wave.open("toire_raspi_py/sound.wav", "r")
     sounds: list[bytes] = []
@@ -175,9 +115,6 @@ def main():
         if data == b"":
             break
         sounds.append(data)
-
-    # print(sounds[0])
-    # print(sounds[-1])
 
     serial_port = SeirialPort(os.environ["SERIAL_PATH"])
 
