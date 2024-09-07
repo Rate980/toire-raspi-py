@@ -17,8 +17,7 @@ RATE = 44100
 RECORD_SECONDS = 2
 URL = os.environ["URL"]
 SERIAL_PATH = os.environ["SERIAL_PATH"]
-
-threadshold = 0.5
+THRESHOLD = float(os.environ["THRESHOLD"])
 
 
 class SeirialPort:
@@ -72,7 +71,7 @@ class MicStream:
         data = in_data
         np_data = np.frombuffer(data, dtype="int16") / 32768.0
 
-        if np.max(np_data) > threadshold:
+        if np.max(np_data) > THRESHOLD:
             print("Detected")
             self.play()
 
