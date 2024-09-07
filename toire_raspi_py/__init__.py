@@ -1,8 +1,10 @@
 import os
 import wave
+from time import sleep
 
 import numpy as np
 import pyaudio
+import requests
 import serial
 from dotenv import load_dotenv
 
@@ -13,6 +15,8 @@ FORMAT = pyaudio.paInt16
 CHANNELS = 2
 RATE = 44100
 RECORD_SECONDS = 2
+URL = os.environ["URL"]
+SERIAL_PATH = os.environ["SERIAL_PATH"]
 
 threadshold = 0.5
 
@@ -22,16 +26,16 @@ class SeirialPort:
         self.serial_port = serial.Serial(path, 115200, timeout=1)
 
     def send_on_unko(self):
-        self.serial_port.write(b"0")
+        self.serial_port.write(b"0\n")
 
     def send_on_clean(self):
-        self.serial_port.write(b"1")
+        self.serial_port.write(b"1\n")
 
     def send_on_cleaning_done(self):
-        self.serial_port.write(b"2")
+        self.serial_port.write(b"2\n")
 
     def send_reset(self):
-        self.serial_port.write(b"3")
+        self.serial_port.write(b"3\n")
 
 
 class MicStream:
@@ -71,7 +75,6 @@ class MicStream:
         if np.max(np_data) > threadshold:
             print("Detected")
             self.play()
-            self.serial_port.send_on_clean()
 
     def callback_output(self, in_data, frame_count, time_info, status):
         if not self.is_playing:
@@ -88,6 +91,7 @@ class MicStream:
     def on_unko(self):
         self.exist_unko = True
         if not self.is_playing:
+            print(self.is_playing)
             self.serial_port.send_on_unko()
 
     def on_endplay(self):
@@ -102,9 +106,16 @@ class MicStream:
         return self.exist_unko and not self.is_playing
 
     def play(self):
+        self.serial_port.send_on_clean()
+        requests.delete(URL)
         self.audio_index = 0
         self.is_playing = True
         self.exist_unko = False
+
+
+def check_unko():
+    data = requests.get(URL).json()
+    return data is not None and len(data) > 0
 
 
 def main():
@@ -116,12 +127,17 @@ def main():
             break
         sounds.append(data)
 
-    serial_port = SeirialPort(os.environ["SERIAL_PATH"])
-
+    serial_port = SeirialPort(SERIAL_PATH)
     mic_stream = MicStream(sounds, serial_port)
     while True:
-        input("Press Enter to send unko")
-        mic_stream.on_unko()
+        if mic_stream.exist_unko or mic_stream.is_playing:
+            sleep(0.1)
+            continue
+
+        if check_unko():
+            print("on_unko")
+            mic_stream.on_unko()
+        sleep(0.1)
 
 
 if __name__ == "__main__":
