@@ -70,8 +70,9 @@ class MicStream:
 
         data = in_data
         np_data = np.frombuffer(data, dtype="int16") / 32768.0
+        res = np.abs(np_data).mean()
 
-        if np.max(np_data) > THRESHOLD:
+        if res > THRESHOLD:
             print("Detected")
             self.play()
 
